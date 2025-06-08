@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "UE5_5_AiWebsocketCharacter.generated.h"
+#include "WebSockets/Public/IWebSocket.h"  // Correct WebSocket include path
 
 class USpringArmComponent;
 class UCameraComponent;
@@ -46,6 +47,18 @@ class AUE5_5_AiWebsocketCharacter : public ACharacter
 
 public:
 	AUE5_5_AiWebsocketCharacter();
+
+protected:
+	virtual void BeginPlay() override;
+	
+private:
+	TSharedPtr<IWebSocket> WebSocket;
+	
+	void ConnectToWebSocket();
+	void OnWebSocketConnected();
+	void OnWebSocketMessage(const FString& Message);
+	void OnWebSocketError(const FString& Error);
+	void OnWebSocketClosed(int32 StatusCode, const FString& Reason, bool bWasClean);
 	
 
 protected:
@@ -69,4 +82,3 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 };
-

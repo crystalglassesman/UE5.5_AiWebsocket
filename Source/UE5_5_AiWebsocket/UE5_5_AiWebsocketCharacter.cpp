@@ -10,6 +10,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "WebSocketsModule.h"  // For WebSocket module
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -52,6 +53,53 @@ AUE5_5_AiWebsocketCharacter::AUE5_5_AiWebsocketCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+}
+
+void AUE5_5_AiWebsocketCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+	ConnectToWebSocket();
+}
+
+void AUE5_5_AiWebsocketCharacter::ConnectToWebSocket()
+{
+	const FString ServerURL = TEXT("ws://localhost:8765");
+	
+	// Load WebSockets module
+	FWebSocketsModule& WebSocketsModule = FModuleManager::LoadModuleChecked<FWebSocketsModule>(TEXT("WebSockets"));
+	WebSocket = WebSocketsModule.CreateWebSocket(ServerURL);
+
+	// Setup event handlers
+	WebSocket->OnConnected().AddLambda([this]() { OnWebSocketConnected(); });
+	WebSocket->OnConnectionError().AddLambda([this](const FString& Error) { OnWebSocketError(Error); });
+	WebSocket->OnClosed().AddLambda([this](int32 StatusCode, const FString& Reason, bool bWasClean) { OnWebSocketClosed(StatusCode, Reason, bWasClean); });
+	WebSocket->OnMessage().AddLambda([this](const FString& Message) { OnWebSocketMessage(Message); });
+
+	// Connect
+	WebSocket->Connect();
+}
+
+void AUE5_5_AiWebsocketCharacter::OnWebSocketConnected()
+{
+	UE_LOG(LogTemp, Log, TEXT("WebSocket connected to %s"), *WebSocket->GetURL());
+	// Example: Send initial message after connection
+	// WebSocket->Send(TEXT("Hello from Unreal"));
+}
+
+void AUE5_5_AiWebsocketCharacter::OnWebSocketMessage(const FString& Message)
+{
+	UE_LOG(LogTemp, Log, TEXT("WebSocket message received: %s"), *Message);
+	// Handle received messages here
+}
+
+void AUE5_5_AiWebsocketCharacter::OnWebSocketError(const FString& Error)
+{
+	UE_LOG(LogTemp, Error, TEXT("WebSocket error: %s"), *Error);
+}
+
+void AUE5_5_AiWebsocketCharacter::OnWebSocketClosed(int32 StatusCode, const FString& Reason, bool bWasClean)
+{
+	UE_LOG(LogTemp, Log, TEXT("WebSocket closed: %s"), *Reason);
 }
 
 //////////////////////////////////////////////////////////////////////////
