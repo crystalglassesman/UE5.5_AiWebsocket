@@ -2,6 +2,8 @@
 .vs/
 
 .vscode/
+Config/
+Content/
 
 # Compiled Object files
 *.slo
